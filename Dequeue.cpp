@@ -1,9 +1,7 @@
-﻿// Dequeue.cpp : Defines the entry point for the application.
+// Dequeue.cpp : Defines the entry point for the application.
 //
 
 #include "Dequeue.h"
-
-using namespace std;
 
 class SampleMemAllocStrategy
 {
@@ -53,6 +51,7 @@ public:
 		{
 			if (item)
 				item = item->next;
+			return *this;
 		}
 
 		DequeIterator operator++(int)
@@ -64,7 +63,9 @@ public:
 
 		bool operator!=(const DequeIterator& iterator)
 		{
-			return item != iterator.item || ownerDeque != iterator.ownerDeque;
+			if (ownerDeque != iterator.ownerDeque)
+			  throw std::exception("Unable to compare iterators of diferent deques.");
+			return item != iterator.item;
 		}
 
 		DataType& operator*()
@@ -88,6 +89,7 @@ public:
 		{
 			if (item)
 				item = item->next;
+			return *this;
 		}
 
 		ConstDequeIterator operator++(int)
@@ -99,6 +101,8 @@ public:
 
 		bool operator!=(const ConstDequeIterator& iterator)
 		{
+			if (ownerDeque != iterator.ownerDeque)
+			  throw std::exception("Unable to compare iterators of diferent deques.");
 			return item != iterator.item;
 		}
 
@@ -110,22 +114,22 @@ public:
 
 	DequeIterator begin()
 	{
-		return DequeIterator(front);
+		return DequeIterator(this, front);
 	}
 
 	DequeIterator end()
 	{
-		return DequeIterator(nullptr);
+		return DequeIterator(this, nullptr);
 	}
 
 	ConstDequeIterator cbegin() const
 	{
-		return ConstDequeIterator(front);
+		return ConstDequeIterator(this, front);
 	}
 
 	ConstDequeIterator cend() const
 	{
-		return ConstDequeIterator(nullptr);
+		return ConstDequeIterator(this, nullptr);
 	}
 
 	Deque() : front(nullptr), back(nullptr) { };
@@ -171,13 +175,13 @@ public:
 
 	void PushFront(const DataType& data)
 	{
-		DequeItem* item = memAllocator.alloc(sizeof(DequeItem));
+		DequeItem* item = (DequeItem*)memAllocator.alloc(sizeof(DequeItem));
 		item->data = data;
 		item->prev = nullptr;
 		item->next = front;
 		if (front != nullptr)
 		{
-			front->prev = item
+			front->prev = item;
 		}
 		else
 		{
@@ -188,13 +192,13 @@ public:
 
 	void PushBack(const DataType& data)
 	{
-		DequeItem* item = memAllocator.alloc(sizeof(DequeItem));
+		DequeItem* item = (DequeItem*)memAllocator.alloc(sizeof(DequeItem));
 		item->data = data;
 		item->next = nullptr;
 		item->prev = back;
 		if (back != nullptr)
 		{
-			back->next = item
+			back->next = item;
 		}
 		else
 		{
@@ -205,13 +209,13 @@ public:
 
 	void PushFront(DataType && data)
 	{
-		DequeItem* item = memAllocator.alloc(sizeof(DequeItem));
+		DequeItem* item = (DequeItem*)memAllocator.alloc(sizeof(DequeItem));
 		item->data = std::move(data);
 		item->prev = nullptr;
 		item->next = front;
 		if (front != nullptr)
 		{
-			front->prev = item
+			front->prev = item;
 		}
 		else
 		{
@@ -222,13 +226,13 @@ public:
 
 	void PushBack(DataType&& data)
 	{
-		DequeItem* item = memAllocator.alloc(sizeof(DequeItem));
+		DequeItem* item = (DequeItem*)memAllocator.alloc(sizeof(DequeItem));
 		item->data = std::move(data);
 		item->next = nullptr;
 		item->prev = back;
 		if (back != nullptr)
 		{
-			back->next = item
+			back->next = item;
 		}
 		else
 		{
@@ -242,47 +246,133 @@ public:
 		DequeItem* item = front;
 		if (item == nullptr)
 		{
-			throw exception("Cannot delete from enpty deque.");
+			throw std::exception("Unable to delete from enpty deque.");
 		}
 		front = front->next;
 		if (front == nullptr)
 		{
 			back = nullptr;
 		}
-		memAllocator.delloc(item);
+		memAllocator.delloc((unsigned char*)item);
 	}
 	void PopBack()
 	{
 		DequeItem* item = back;
 		if (item == nullptr)
 		{
-			throw exception("Cannot delete from enpty deque.");
+			throw std::exception("Unable to delete from enpty deque.");
 		}
 		back = back->prev;
 		if (back == nullptr)
 		{
 			front = nullptr;
 		}
-		memAllocator.delloc(item);
+		memAllocator.delloc((unsigned char*)item);
 	}
 
-	GetFront();
-	GetBack();
-
-	PeekFront();
-	PeekBack();
-
-	void Delete(DequeIterator& itarator)
+	DataType& GetFront()
 	{
-
+	  if (front == nullptr)
+	    throw std::exception("Unable to get item from empty deque.");
+	  return front->data;
+	}
+	
+	DataType& GetBack()
+	{
+	  if (back == nullptr)
+	    throw std::exception("Unable to get item from empty deque.");
+	  return back->data;
 	}
 
-	void Clear();
+	DataType const & PeekFront() const
+	{
+	  if (front == nullptr)
+	    throw std::exception("Unable to get item from empty deque.");
+	  return front->data;  
+	}
+	
+	DataType const & PeekBack() const
+	{
+	  if (back == nullptr)
+	    throw std::exception("Unable to get item from empty deque.");
+	  return back->data; 
+	}
+
+	void Delete(DequeIterator& iterator)
+	{
+	  DequeItem* item = iterator.item;
+	  if (this != iterator.owner)
+	    throw std::exception("Unable to delete by iterator of another deque.");
+	  if (item == nullptr)
+	    throw std::exception("Unable to delete by end iterator.");
+	  if (item == front && item == back)
+	  {
+	    front = nullptr;
+	    back = nullptr;
+	  }
+	  else if (item == front)
+	  {
+	    front = front->next;
+	    front->prev = nullptr;
+	  }
+	  else if (item == back)
+	  {
+	    back = back->prev;
+	    back->next = nullptr;
+	  }
+	  else
+	  {
+	    item->back->next = item->next;
+	    item->next->back = item->back;
+	  }
+	  memAllocator.delloc((unsigned char*)item);
+	}
+
+	void Clear()
+	{
+	  DequeItem* item = front;
+	  while (item != nullptr)
+	  {
+	    auto tmp = item->next;
+	    memAllocator.delloc((unsigned char*)item);
+	    item = tmp;
+	  }
+	  front = nullptr;
+	  back = nullptr;
+	}
+	
+	bool IsEmpty()
+	{
+	  return front == nullptr;
+	}
 
 
-	Deque& operator+=(Deque& left, const Deque& right);
+	Deque& operator+=(const Deque& right)
+	{
+	  for (const DataType &data: right)
+	  {
+	    PushBack(data);
+	  }
+	  return *this;
+	}
 
-	Deque& operator+=(Deque& left, Deque&& right);
+	Deque& operator+=(Deque&& right)
+	{
+	  if (IsEmpty())
+	  {
+	    back = right.back;
+	    front = right.front;
+	  }
+	  else if (!right.IsEmpy())
+	  {
+	    back->next = right.front;
+	    right.front->prev = back;
+	    back = right.back;
+	  }
+	  right.front = nullptr;
+	  right.back = nullptr;
+	  return *this;
+	}
 
 
 
@@ -290,6 +380,15 @@ public:
 
 int main()
 {
-	cout << "Hello CMake." << endl;
+	Deque<int> deque;
+	for (int i = 0; i < 10; i++)
+	{
+		deque.PushBack(i);
+	}
+	std::cout << "Hello CMake." << std::endl;
+	for (auto& i : deque)
+	{
+		std::cout << i << std::endl;
+	}
 	return 0;
 }
