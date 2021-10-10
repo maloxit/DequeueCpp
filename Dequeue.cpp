@@ -64,7 +64,7 @@ public:
 		bool operator!=(const DequeIterator& iterator)
 		{
 			if (ownerDeque != iterator.ownerDeque)
-			  throw std::exception("Unable to compare iterators of diferent deques.");
+			  throw std::logic_error("Unable to compare iterators of diferent deques.");
 			return item != iterator.item;
 		}
 
@@ -102,7 +102,7 @@ public:
 		bool operator!=(const ConstDequeIterator& iterator)
 		{
 			if (ownerDeque != iterator.ownerDeque)
-			  throw std::exception("Unable to compare iterators of diferent deques.");
+			  throw std::logic_error("Unable to compare iterators of diferent deques.");
 			return item != iterator.item;
 		}
 
@@ -246,7 +246,7 @@ public:
 		DequeItem* item = front;
 		if (item == nullptr)
 		{
-			throw std::exception("Unable to delete from enpty deque.");
+			throw std::logic_error("Unable to delete from enpty deque.");
 		}
 		front = front->next;
 		if (front == nullptr)
@@ -260,7 +260,7 @@ public:
 		DequeItem* item = back;
 		if (item == nullptr)
 		{
-			throw std::exception("Unable to delete from enpty deque.");
+			throw std::logic_error("Unable to delete from enpty deque.");
 		}
 		back = back->prev;
 		if (back == nullptr)
@@ -273,28 +273,28 @@ public:
 	DataType& GetFront()
 	{
 	  if (front == nullptr)
-	    throw std::exception("Unable to get item from empty deque.");
+	    throw std::logic_error("Unable to get item from empty deque.");
 	  return front->data;
 	}
 	
 	DataType& GetBack()
 	{
 	  if (back == nullptr)
-	    throw std::exception("Unable to get item from empty deque.");
+	    throw std::logic_error("Unable to get item from empty deque.");
 	  return back->data;
 	}
 
 	DataType const & PeekFront() const
 	{
 	  if (front == nullptr)
-	    throw std::exception("Unable to get item from empty deque.");
+	    throw std::logic_error("Unable to get item from empty deque.");
 	  return front->data;  
 	}
 	
 	DataType const & PeekBack() const
 	{
 	  if (back == nullptr)
-	    throw std::exception("Unable to get item from empty deque.");
+	    throw std::logic_error("Unable to get item from empty deque.");
 	  return back->data; 
 	}
 
@@ -302,9 +302,9 @@ public:
 	{
 	  DequeItem* item = iterator.item;
 	  if (this != iterator.owner)
-	    throw std::exception("Unable to delete by iterator of another deque.");
+	    throw std::logic_error("Unable to delete by iterator of another deque.");
 	  if (item == nullptr)
-	    throw std::exception("Unable to delete by end iterator.");
+	    throw std::logic_error("Unable to delete by end iterator.");
 	  if (item == front && item == back)
 	  {
 	    front = nullptr;
@@ -373,8 +373,6 @@ public:
 	  right.back = nullptr;
 	  return *this;
 	}
-
-
 
 };
 
